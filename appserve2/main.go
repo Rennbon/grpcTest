@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
-	"grpcTest/pb/entity"
+	"grpcTest/appserve2/entity"
+
 	"io"
 	"log"
 	"net"
@@ -28,7 +30,7 @@ func (c *Serve1) Pipe(stream pb.Bus_PipeServer) error {
 		if err != nil {
 			return err
 		}
-		pmu := &entity.UserRequest{}
+		pmu := &entity.ShoesRequest{}
 		err = ptypes.UnmarshalAny(in.GetParams(), pmu)
 		if err != nil {
 			return err
@@ -38,26 +40,18 @@ func (c *Serve1) Pipe(stream pb.Bus_PipeServer) error {
 			Code: true,
 		}
 		object := &any.Any{}
-		if pmu.UserId == "id-2" {
-			pm := &entity.UserInfo{
-				UserId:   "id-002",
-				UserName: "Rose",
-				Face:     "https://upload.jianshu.io/users/upload_avatars/7215015/1d634670-8438-4a49-9748-9fc36f5168ce?imageMogr2/auto-orient/strip|imageView2/1/w/120/h/120",
-			}
-			object, err = ptypes.MarshalAny(pm)
-			if err != nil {
-				return err
-			}
-		} else {
+		if pmu.Size == 42 {
 			pm := &entity.Shoes{
 				Logo:  "NIKE",
-				Size:  43,
+				Size:  42,
 				Price: 999.98,
 			}
 			object, err = ptypes.MarshalAny(pm)
 			if err != nil {
 				return err
 			}
+		} else {
+			return errors.New("this size doesn't exist")
 		}
 		rsp.Params = object
 		if err := stream.Send(rsp); err != nil {
@@ -68,7 +62,7 @@ func (c *Serve1) Pipe(stream pb.Bus_PipeServer) error {
 
 func main() {
 	lis, err := net.Listen("tcp", "127.0.0.1:10002")
-	log.Println("server start")
+	log.Println("server2 start")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 		return

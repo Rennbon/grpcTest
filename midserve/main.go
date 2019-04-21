@@ -12,53 +12,69 @@ import (
 )
 
 func main() {
-	conn1, err := grpc.Dial("127.0.0.1:10001", grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	conn2, err := grpc.Dial("127.0.0.1:10002", grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	defer conn1.Close()
-	defer conn2.Close()
-	c1 := pb.NewBusClient(conn1)
-	pipe(c1, "id-1")
-
-	c2 := pb.NewBusClient(conn2)
-	pipe(c2, "id-2")
-
+	app1Client()
+	app2Client()
 }
-func pipe(client pb.BusClient, userId string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func app1Client() {
+	conn, err := grpc.Dial("127.0.0.1:10001", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+
+	defer conn.Close()
+	c := pb.NewBusClient(conn)
 	object, err := ptypes.MarshalAny(&entity.UserRequest{
-		UserId: userId,
+		UserId: "id-1",
 	})
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return
 	}
 	preq := &pb.PipeRequest{
 		Qid:    "1",
 		Params: object,
 	}
+	rsp, err := pipe(c, preq)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(rsp.Params.String())
+}
+func app2Client() {
+	conn, err := grpc.Dial("127.0.0.1:10002", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+
+	defer conn.Close()
+	c := pb.NewBusClient(conn)
+	object, err := ptypes.MarshalAny(&entity.ShoesRequest{
+		Size: 42,
+	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	preq := &pb.PipeRequest{
+		Qid:    "1",
+		Params: object,
+	}
+	rsp, err := pipe(c, preq)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(rsp.Params.String())
+}
+
+func pipe(client pb.BusClient, request *pb.PipeRequest) (*pb.PipeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	cli, err := client.Pipe(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	cli.Send(preq)
-	for {
-		resp, err := cli.Recv()
-		if err != nil {
-			return err
-		}
-		pmu := &entity.UserInfo{}
-		err = ptypes.UnmarshalAny(resp.Params, pmu)
-		if err != nil {
-			return err
-		}
-		fmt.Println(pmu.UserId, pmu.UserName)
-		break
-	}
-	return nil
+	cli.Send(request)
+	return cli.Recv()
+
 }

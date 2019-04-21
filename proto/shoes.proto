@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package eventbus;
+
+message ShoesRequest{
+    int32 size=1;
+}
+message Shoes{
+    int32 size =1 ;
+    string logo =2 ;
+    double price =3 ;
+}

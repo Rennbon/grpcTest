@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
-	"grpcTest/pb/entity"
+	"grpcTest/appserve1/entity"
 	"io"
 	"log"
 	"net"
@@ -42,22 +43,14 @@ func (c *Serve1) Pipe(stream pb.Bus_PipeServer) error {
 			pm := &entity.UserInfo{
 				UserId:   "id-001",
 				UserName: "Jack",
-				Face:     "https://upload.jianshu.io/users/upload_avatars/7215015/1d634670-8438-4a49-9748-9fc36f5168ce?imageMogr2/auto-orient/strip|imageView2/1/w/120/h/120",
+				Face:     "handsome.jpg",
 			}
 			object, err = ptypes.MarshalAny(pm)
 			if err != nil {
 				return err
 			}
 		} else {
-			pm := &entity.Shoes{
-				Logo:  "NIKE",
-				Size:  43,
-				Price: 999.98,
-			}
-			object, err = ptypes.MarshalAny(pm)
-			if err != nil {
-				return err
-			}
+			return errors.New("this id doesn't exist")
 		}
 		rsp.Params = object
 		if err := stream.Send(rsp); err != nil {
@@ -68,7 +61,7 @@ func (c *Serve1) Pipe(stream pb.Bus_PipeServer) error {
 
 func main() {
 	lis, err := net.Listen("tcp", "127.0.0.1:10001")
-	log.Println("server start")
+	log.Println("server1 start")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 		return

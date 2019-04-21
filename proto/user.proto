@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package eventbus;
+
+
+message UserRequest{
+    string user_id=1;
+}
+message UserInfo{
+    string user_id =1 ;
+    string user_name =2 ;
+    string face =3 ;
+}
